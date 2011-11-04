@@ -31,35 +31,51 @@ function handler (request, response) {
     });
 }
 
-var clients = [];
+var clients = {}; // pool of connected clients
+var i = 0; // an index
+var clientCount = 0; // number of clients still connected
 
-var i = 0;
+var lastData = {}; // current data (for new comers)
 
 io.sockets.on('connection', function (socket) {
   
-  // add the socket to the client pool
-  clients.push( socket );
+  // give the client a unique Id
+  socket.clientId = "user" + i++ ; // user1, user2, ...
   
-  socket.clientNumber = i++;
-  socket.clientId = "user" + socket.clientNumber ; // user1, user2, ...
+  // add the client to the pool
+  clients[socket.clientId] = socket;
+  clientCount++;
   
-  io.sockets.emit('news', socket.clientId+' has joined the fun and there are ' + clients.length + " of you now" );
+  // tell everyone that the new guy arrived
+  socket.broadcast.emit('news', socket.clientId + ' has joined the fun and there are ' + clientCount + " of you now" );
   
+  // give the new guy the current strokes
+  socket.emit('draw', lastData);
+  
+  // listen to draw orders
   socket.on('drawThis', function (data) {
     
+    // log
     if(data.strokes && data.clientId){
-      console.log( data.clientId + " drew " + data.strokes );
+      console.log( data.clientId + " drew something" );
     }
-      
-    // tell everyone to draw this
-    for(var j = 0, l = clients.length; j < l; j++){
-      clients[j].emit('draw', data);
-    }
+    
+    // broadcast the drawing to everyone
+    socket.broadcast.emit('draw',data);
+    
+    // save the current dataset
+    lastData = data;
     
   });
   
   socket.on('disconnect', function () {
-      io.sockets.emit('news', socket.clientId + ' has disconnected');
+    
+      socket.broadcast.emit('news', socket.clientId + ' has disconnected');
+      
+      clientCount--;
+      
+      delete clients[socket.clientId];
+      
   });
   
   

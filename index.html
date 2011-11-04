@@ -10,47 +10,75 @@
 </head>
 <body>
   
-  <div id="editor" style="border: black 2px solid; height: 400px; width: 400px;"></div>
-  <div id="viewer" style="border: black 2px solid; height: 400px; width: 400px;"></div>
+  <div id="editor" class="sketchpad"></div>
+  <div id="news" style=""></div>
   
   <script type="text/javascript">
   	
-  	var socket = io.connect('http://localhost');
-    
-    socket.on('draw', function (data) {
-      console.log("Server wants me to draw ");
+  	$(function(){
+  	  
+  	  // Connect to drawing server
+  	  var socket = io.connect('http://localhost');
       
-      sketchpad2.strokes(data.strokes);
+      // Create the editor sketchpad
+    	var sketchpad = Raphael.sketchpad("editor", {
+    		width: 400,
+    		height: 400,
+    		editing: true
+    	});
       
-    });
-    
-    socket.on('news', function(data) {
-      console.log(data);
-    });
-  	
-  	var sketchpad = Raphael.sketchpad("editor", {
-  		width: 400,
-  		height: 400,
-  		editing: true
-  	});
-  	
-  	var sketchpad2 = Raphael.sketchpad("viewer", {
-  		width: 400,
-  		height: 400,
-  		editing: false
-  	});
-  	
+      // Create the viewer sketchpad
+      // var sketchpad2 = Raphael.sketchpad("viewer", {
+      //  width: 200,
+      //  height: 400,
+      //  editing: false
+      // });
 
-  	// When the sketchpad changes, update the input field.
-  	sketchpad.change(function() {
-  	  console.log("sketchpad change:"+sketchpad.json());
-  	  
-  	  socket.emit("drawThis",{ strokes: sketchpad.strokes()});
-  	  
+      // Listen to news
+      socket.on('news', function(data) {
+        
+        // Add the message to the top of the news bar
+        if(data){
+          $('#news').prepend(data + "<br />");
+        }
+        
+      });
+
+
+      var listenToChanges = true;
+      
+    	// When the server sends me a drawing, draw it in the sketchpad
+      socket.on('draw', function (data) {
+        
+        listenToChanges = false;
+        sketchpad.strokes(data.strokes);
+        
+      });
+
+    	// When the sketchpad changes, send the drawing to the server
+    	sketchpad.change(function() {
+        
+        if(listenToChanges){
+         socket.emit("drawThis",{ strokes: sketchpad.strokes()}); 
+        }
+    	  else{
+    	    listenToChanges = true;
+    	  }
+
+    	});
+    	
+    	
+    	// Set styles
+    	var sketchpads = $('.sketchpad');
+    	sketchpads.css('display', 'inline-block');
+    	sketchpads.css('margin','10px');
+    	sketchpads.css('border','black 2px solid');
+    	sketchpads.height(400);
+    	sketchpads.width(400);
+    	
+    	
+    	
   	});
-  	
-  	
-  	
   </script>
 
 </body>
