@@ -1,6 +1,7 @@
 var app = require('http').createServer(handler)
   , io = require('socket.io').listen(app)
   , fs = require('fs')
+
 var path = require('path');
 
 app.listen(8080);
@@ -8,7 +9,7 @@ app.listen(8080);
 function handler (request, response) {
   var filePath = '.' + request.url;
     if (filePath == './')
-      filePath = './index.htm';
+      filePath = './index.html';
 
     path.exists(filePath, function(exists) {
 
@@ -28,12 +29,21 @@ function handler (request, response) {
         response.writeHead(404);
         response.end();
       }
-    });
+    })
 }
 
 io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
-});
+  
+  socket.on('new_message', function (data) {
+    // console.log(data);
+    
+    var new_message = data.message
+    
+    socket.emit('write_new_message', {message: new_message})
+    
+    socket.broadcast.emit('write_new_message', {message: new_message})
+    
+    console.log("---------------------------------")    
+  })
+  
+}) 

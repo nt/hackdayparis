@@ -1,0 +1,30 @@
+<script src="jquery-1.7.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+indexus
+
+<script>
+  
+  var socket = io.connect('http://localhost')
+  
+  socket.on('write_new_message', function (data) {
+    write_new_message(data.message)
+  })
+  
+</script>
+
+<div id='messages_container'></div>
+
+<input id='new_text_input' type='text' />
+
+<button onclick='send_new_message()' >Nouveau message</button>
+
+<script>
+function send_new_message(){
+  var message = $('#new_text_input').val()
+  socket.emit('new_message', { message: message })
+}
+function write_new_message(new_message){
+  $('#messages_container').append("- " + new_message + "<br />")
+}
+</script>
