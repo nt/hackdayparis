@@ -4,7 +4,7 @@ var app = require('http').createServer(handler)
 var path = require('path');
 
 var port = process.env.PORT || 8080;
-app.listen(PORT);
+app.listen(port);
 
 function handler (request, response) {
   var filePath = '.' + request.url;
@@ -35,7 +35,6 @@ function handler (request, response) {
 
 var MESSAGE_BACKLOG = 200;
 var messages = [];
-
 
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
