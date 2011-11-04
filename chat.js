@@ -8,7 +8,7 @@ app.listen(8080);
 function handler (request, response) {
   var filePath = '.' + request.url;
     if (filePath == './')
-      filePath = './index.htm';
+      filePath = './chat.html';
 
     path.exists(filePath, function(exists) {
 
