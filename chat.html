@@ -1,9 +1,30 @@
 <script src="jquery-1.7.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  var socket = io.connect('http://localhost');
-  socket.on('news', function (data) {
-    console.log(data);
-    socket.emit('my other event', { my: 'data' });
-  });
+  $(function(){
+    var socket = io.connect('http://localhost');
+    socket.on('news', function (data) {
+      console.log(data);
+      socket.emit('my other event', { my: 'data' });
+    });
+    socket.on('message down', function(m){
+      for(i in m) {
+        $('#chatlog').append('<p>'+m[i]+'</p>')
+      }
+    });
+    $("#chat_input").submit(function() {
+      socket.emit('message up', $("#chat_text").val());
+      $("#chat_text").val("");
+      return false;
+    })
+  })
+
 </script>
+
+<div id="chatlog">
+</div>
+
+<form action="#" id='chat_input' method="post" accept-charset="utf-8">
+  <input id='chat_text'/>
+  <input type="submit" value="Continue &rarr;">
+</form>

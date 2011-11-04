@@ -31,9 +31,27 @@ function handler (request, response) {
     });
 }
 
+
+var MESSAGE_BACKLOG = 200;
+var messages = [];
+
+
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
+  
+  socket.emit('message down', messages);
+  
   socket.on('my other event', function (data) {
     console.log(data);
   });
+
+  socket.on('message up', function(m){
+    console.log('received', m);
+    messages.push(m);
+    while (messages.length > MESSAGE_BACKLOG)
+      messages.shift();
+    io.sockets.emit('message down', [m]);
+  })
+
 });
+
