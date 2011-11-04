@@ -1,0 +1,56 @@
+<!html>
+<head>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/raphael-min.js"></script>
+  <script type="text/javascript" src="js/json2.js"></script>
+  <script type="text/javascript" src="js/raphael.sketchpad.js"></script>
+  
+</head>
+<body>
+  
+  <div id="editor" style="border: black 2px solid; height: 400px; width: 400px;"></div>
+  <div id="viewer" style="border: black 2px solid; height: 400px; width: 400px;"></div>
+  
+  <script type="text/javascript">
+  	
+  	var socket = io.connect('http://localhost');
+    
+    socket.on('draw', function (data) {
+      console.log("Server wants me to draw ");
+      
+      sketchpad2.strokes(data.strokes);
+      
+    });
+    
+    socket.on('news', function(data) {
+      console.log(data);
+    });
+  	
+  	var sketchpad = Raphael.sketchpad("editor", {
+  		width: 400,
+  		height: 400,
+  		editing: true
+  	});
+  	
+  	var sketchpad2 = Raphael.sketchpad("viewer", {
+  		width: 400,
+  		height: 400,
+  		editing: false
+  	});
+  	
+
+  	// When the sketchpad changes, update the input field.
+  	sketchpad.change(function() {
+  	  console.log("sketchpad change:"+sketchpad.json());
+  	  
+  	  socket.emit("drawThis",{ strokes: sketchpad.strokes()});
+  	  
+  	});
+  	
+  	
+  	
+  </script>
+
+</body>

@@ -8,7 +8,7 @@ app.listen(8080);
 function handler (request, response) {
   var filePath = '.' + request.url;
     if (filePath == './')
-      filePath = './index.htm';
+      filePath = './index.html';
 
     path.exists(filePath, function(exists) {
 
@@ -31,9 +31,36 @@ function handler (request, response) {
     });
 }
 
+var clients = [];
+
+var i = 0;
+
 io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
+  
+  // add the socket to the client pool
+  clients.push( socket );
+  
+  socket.clientNumber = i++;
+  socket.clientId = "user" + socket.clientNumber ; // user1, user2, ...
+  
+  io.sockets.emit('news', socket.clientId+' has joined the fun and there are ' + clients.length + " of you now" );
+  
+  socket.on('drawThis', function (data) {
+    
+    if(data.strokes && data.clientId){
+      console.log( data.clientId + " drew " + data.strokes );
+    }
+      
+    // tell everyone to draw this
+    for(var j = 0, l = clients.length; j < l; j++){
+      clients[j].emit('draw', data);
+    }
+    
   });
+  
+  socket.on('disconnect', function () {
+      io.sockets.emit('news', socket.clientId + ' has disconnected');
+  });
+  
+  
 });
