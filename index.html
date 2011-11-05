@@ -19,11 +19,16 @@
     }
   
   </style>
+  <div id="clientId"></div>
   <div id="editor" class="sketchpad"></div>
   <div id="colorpicker"></div>
   <div id="news" style=""></div>
+  <button id="clear">Clear</button>
   
   <script type="text/javascript">
+  	var thisClientId = "";
+  	
+  	var presentStrokes = []; // Array containing all the strokes on my canvas
   	
   	$(function(){
   	  
@@ -37,14 +42,20 @@
     		editing: true
     	});
     	
-    	var pen = sketchpad.pen();
+    	// Add a helper method to draw on sketchpad without firing the "sketchpad.change" event
+    	var listenToChanges = true;
+      var silentDraw = function(strokes){
+         // ignore changes for a while
+      	 listenToChanges = false;
+
+      	 // draw the strokes
+         sketchpad.strokes( presentStrokes );
+      };
       
-      // Create the viewer sketchpad
-      // var sketchpad2 = Raphael.sketchpad("viewer", {
-      //  width: 200,
-      //  height: 400,
-      //  editing: false
-      // });
+    	// Set the clear button
+    	$('#clear').click(function(){
+        sketchpad.clear();
+    	});
 
       // Listen to news
       socket.on('news', function(data) {
@@ -55,23 +66,76 @@
         }
         
       });
-
-
-      var listenToChanges = true;
+      
+      // Listen for initial strokes
+      socket.on('init', function(strokes){
+        presentStrokes = strokes;
+        
+        silentDraw( presentStrokes );
+      });
       
     	// When the server sends me a drawing, draw it in the sketchpad
-      socket.on('draw', function (data) {
+      socket.on('draw', function (stroke) {
         
-        listenToChanges = false;
-        sketchpad.strokes(data.strokes);
-        
+        if(stroke){
+          // add the stroke to the stack
+           presentStrokes.push( stroke );
+
+           // refresh the stack
+           silentDraw( presentStrokes );
+        }
+         
       });
 
-    	// When the sketchpad changes, send the drawing to the server
+
+
+    	// Fired when I draw on my sketchpad
     	sketchpad.change(function() {
         
+        // console.log("Change() with listenToChanges="+listenToChanges );
+        
         if(listenToChanges){
-         socket.emit("drawThis",{ strokes: sketchpad.strokes()}); 
+         
+         // get the strokes
+         var strokesArray = sketchpad.strokes();
+         
+         // the last stroke is the one I drew
+         var lastStroke = strokesArray[strokesArray.length-1];
+         
+         // clean the stroke: remove any weird paths (i.e. with negative values)
+         var cleanPaths = [];
+         // console.log("Going through the paths:\n");
+         $.each(lastStroke.path, function(position,path){
+           
+           console.log(JSON.stringify(path));
+           
+           // TODO: remove weird points (not necessarly negative values... just weird ones -> zig zag effect)
+           if(path[1]>0 && path[2]>0){
+             // console.log("Pushing it\n");
+             cleanPaths.push(path);
+           }
+           else{
+             // console.log("Not pushing it\n");
+           }
+           
+           
+           
+         });
+         // console.log('cleanPaths = '+JSON.stringify(cleanPaths));
+         lastStroke.path = cleanPaths;
+         
+         // add my client id to the stroke (the server will override this but locally it will be usefull to remember my strokes)
+         lastStroke.clientId = "me";
+         
+         // send the stroke to the server
+         socket.emit("drawThis", lastStroke );
+         
+         // add the stroke to the stack
+         presentStrokes.push( lastStroke );
+         
+         // refresh the stack
+         silentDraw( presentStrokes );
+         
         }
     	  else{
     	    listenToChanges = true;

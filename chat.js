@@ -35,7 +35,7 @@ var clients = {}; // pool of connected clients
 var i = 0; // an index
 var clientCount = 0; // number of clients still connected
 
-var lastData = {}; // current data (for new comers)
+var strokes = []; // current data (for new comers)
 
 io.sockets.on('connection', function (socket) {
   
@@ -43,28 +43,29 @@ io.sockets.on('connection', function (socket) {
   socket.clientId = "user" + i++ ; // user1, user2, ...
   
   // add the client to the pool
-  clients[socket.clientId] = socket;
   clientCount++;
   
   // tell everyone that the new guy arrived
   socket.broadcast.emit('news', socket.clientId + ' has joined the fun and there are ' + clientCount + " of you now" );
   
   // give the new guy the current strokes
-  socket.emit('draw', lastData);
+  socket.emit('initDraw', strokes);
   
   // listen to draw orders
-  socket.on('drawThis', function (data) {
+  socket.on('drawThis', function (stroke) {
     
-    // log
-    if(data.strokes && data.clientId){
-      console.log( data.clientId + " drew something" );
+    if(stroke){
+      
+      // add the clientId in the stroke object
+      stroke.clientId = socket.clientId;
+
+      // broadcast the drawing to everyone
+      socket.broadcast.emit('draw',stroke);
+
+      // add the stroke to the stack
+      strokes.push( stroke );
+      
     }
-    
-    // broadcast the drawing to everyone
-    socket.broadcast.emit('draw',data);
-    
-    // save the current dataset
-    lastData = data;
     
   });
   
