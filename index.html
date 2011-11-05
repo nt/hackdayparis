@@ -6,11 +6,21 @@
   <script type="text/javascript" src="js/raphael-min.js"></script>
   <script type="text/javascript" src="js/json2.js"></script>
   <script type="text/javascript" src="js/raphael.sketchpad.js"></script>
+  <script type="text/javascript" src="js/jscolor/jscolor.js"></script>
+  <script type="text/javascript" src="js/farbtastic/farbtastic.js"></script>
+  <link rel="stylesheet" href="js/farbtastic/farbtastic.css" type="text/css" />
   
 </head>
 <body>
+  <style>
   
+    #colorpicker{
+      display: inline-block;
+    }
+  
+  </style>
   <div id="editor" class="sketchpad"></div>
+  <div id="colorpicker"></div>
   <div id="news" style=""></div>
   
   <script type="text/javascript">
@@ -26,6 +36,8 @@
     		height: 400,
     		editing: true
     	});
+    	
+    	var pen = sketchpad.pen();
       
       // Create the viewer sketchpad
       // var sketchpad2 = Raphael.sketchpad("viewer", {
@@ -75,6 +87,9 @@
     	sketchpads.css('border','black 2px solid');
     	sketchpads.height(400);
     	sketchpads.width(400);
+    	
+    	// add colors
+    	$('#colorpicker').farbtastic(sketchpad.pen().color);
     	
     	
     	
