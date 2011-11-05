@@ -65,7 +65,7 @@
       <div id='tools_container'>
                 
         <!-- <button onclick="">   -->
-          
+        <button id="clear">Clear</button>
         <button onclick="$('#colorpicker').fadeToggle()">Change color</button><br />
         <div id="colorpicker"></div>
       </div>
@@ -103,10 +103,17 @@
 
   <script type="text/javascript">
   	
+  	
+  	var thisClientId = "";
+  	
+  	var presentStrokes = []; // Array containing all the strokes on my canvas
+  	
+  	
   	$(function(){
   	  
   	  // Connect to drawing server
   	  var socket = io.connect('http://localhost');
+  	  
       
       // Create the editor sketchpad
     	var sketchpad = Raphael.sketchpad("editor", {
@@ -114,24 +121,97 @@
     		height: 10000,  // doit être le même que le hacked_page_iframe
     		editing: true
     	});
+    	var sketchpads = $('.sketchpad');
     	
     	var pen = sketchpad.pen();
 
-      var listenToChanges = true;
+    	// add colors
+    	$('#colorpicker').farbtastic(sketchpad.pen().color);
+    	
+    	
+    	// Add a helper method to draw on sketchpad without firing the "sketchpad.change" event
+    	var listenToChanges = true;
+      var silentDraw = function(strokes){
+         // ignore changes for a while
+      	 listenToChanges = false;
+
+      	 // draw the strokes
+         sketchpad.strokes( presentStrokes );
+      };
+      
+    	// Set the clear button
+    	$('#clear').click(function(){
+        sketchpad.clear();
+    	});
+      
+      // Listen for initial strokes
+      socket.on('init', function(strokes){
+        presentStrokes = strokes;
+        
+        silentDraw( presentStrokes );
+      });
       
     	// When the server sends me a drawing, draw it in the sketchpad
-      socket.on('draw', function (data) {
+      socket.on('draw', function (stroke) {
         
-        listenToChanges = false;
-        sketchpad.strokes(data.strokes);
-        
-      });
+        if(stroke){
+          // add the stroke to the stack
+           presentStrokes.push( stroke );
 
-    	// When the sketchpad changes, send the drawing to the server
+           // refresh the stack
+           silentDraw( presentStrokes );
+        }
+         
+      })
+
+
+    	// Fired when I draw on my sketchpad
     	sketchpad.change(function() {
         
+        // console.log("Change() with listenToChanges="+listenToChanges );
+        
         if(listenToChanges){
-         socket.emit("drawThis",{ strokes: sketchpad.strokes()}); 
+         
+           // get the strokes
+          var strokesArray = sketchpad.strokes();
+
+          // the last stroke is the one I drew
+          var lastStroke = strokesArray[strokesArray.length-1];
+
+          // clean the stroke: remove any weird paths (i.e. with negative values)
+          var cleanPaths = [];
+          // console.log("Going through the paths:\n");
+          $.each(lastStroke.path, function(position,path){
+
+           console.log(JSON.stringify(path));
+
+           // TODO: remove weird points (not necessarly negative values... just weird ones -> zig zag effect)
+           if(path[1]>0 && path[2]>0){
+             // console.log("Pushing it\n");
+             cleanPaths.push(path);
+           }
+           else{
+             // console.log("Not pushing it\n");
+           }
+
+          })
+         
+         
+         // console.log('cleanPaths = '+JSON.stringify(cleanPaths));
+         lastStroke.path = cleanPaths;
+         
+         // add my client id to the stroke (the server will override this but locally it will be usefull to remember my strokes)
+         lastStroke.clientId = "me";
+         
+         // send the stroke to the server
+         socket.emit("drawThis", lastStroke );
+         
+         // add the stroke to the stack
+         presentStrokes.push( lastStroke );
+         
+         // refresh the stack
+         silentDraw( presentStrokes );
+         
         }
     	  else{
     	    listenToChanges = true;
@@ -139,16 +219,8 @@
 
     	})
     	
-    	// Set styles
-      var sketchpads = $('.sketchpad');
-    	
-    	// add colors
-    	$('#colorpicker').farbtastic(sketchpad.pen().color);
-
-  	});
+  	})
   </script>
-  
-  
   
 
 </body>
