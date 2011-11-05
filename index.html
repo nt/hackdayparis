@@ -53,7 +53,13 @@
       
     	// Set the clear button
     	$('#clear').click(function(){
-        sketchpad.clear();
+        socket.emit("clear");
+    	});
+    	
+    	socket.on('clear', function(){
+    	  presentStrokes = [];
+    	  
+    	  silentDraw(presentStrokes);
     	});
 
       // Listen to news

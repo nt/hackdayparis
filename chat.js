@@ -75,6 +75,11 @@ io.sockets.on('connection', function (socket) {
     
   });
   
+  // listen to the clear order
+  socket.on('clear', function(){
+    io.sockets.emit('clear');
+  });
+  
   socket.on('disconnect', function () {
     
       socket.broadcast.emit('news', socket.clientId + ' has disconnected');
