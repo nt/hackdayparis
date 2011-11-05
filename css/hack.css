@@ -1,0 +1,77 @@
+body{
+  padding:0px;
+  margin:auto;
+}
+#main_content{
+/* border:solid 1px;*/
+ width:1200px;
+ margin:auto;
+}
+
+#form_container{
+  background-color:#000;
+  color:#FFF;
+  position:fixed;
+  height:100px;
+  width:1200px;
+  z-index:100;
+}
+
+#form_container input[type=text], #form_container input[type=submit]{
+  font-size:30px;
+  padding:5px;
+  border-radius: 2px;
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+}
+#form_container input[type=submit]{
+  
+}
+#select_page_form{
+  margin:20px 10px;
+}
+#select_page_form input[type=text]{
+  width:300px;
+}
+
+#colorpicker{
+  display: inline-block;
+  display:none;
+  background-color:#000;
+  padding:0px;
+}
+#tools_container{
+  right:0px;
+  width:210px;
+  position:absolute;
+  z-index:2;
+}
+#hacked_page_iframe{
+  margin:0px;
+  width:100%;
+  /*doit être le même que le sketchpad*/
+  height:10000px; 
+/*  height:200px;*/
+  margin:auto;
+  border:none;
+}
+#hacked_page_iframe a{
+  z-index:1000;
+  color:#991B00;
+}
+#editor{
+  z-index:1;
+  position:absolute;
+  top:0px;
+}
+
+#hacked_page_container{
+  position:relative;
+  top:100px;
+}
+
+.action_mode{
+  padding:10px;
+  padding-left:50px;
+  font-size:30px;
+}

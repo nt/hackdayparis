@@ -10,19 +10,97 @@
   <script type="text/javascript" src="js/farbtastic/farbtastic.js"></script>
   <link rel="stylesheet" href="js/farbtastic/farbtastic.css" type="text/css" />
   
+  <link rel="stylesheet" href="css/hack.css" type="text/css" />
+  
 </head>
-<body>
-  <style>
+
+
+
+<script>
+  // l'url de la page que l'on est en train de hacker
+  var hacked_page = ''
+  // choppe la page choisi dans l'input et l'affiche dans l'iframe
+  function hack_page(){
+    hacked_page = $('#hacked_page_input').val()
+    $('#hacked_page_iframe').attr('src', hacked_page)
+  }
+  function toggle_drawing(){
+    
+  }
   
-    #colorpicker{
-      display: inline-block;
+  // pour gérer les mouvements claviers
+	if(jQuery.browser.mozilla){
+		jQuery(document).keypress(checkKey)
+    // jQuery(document).keyup(checkKey)
+	}else{
+		jQuery(document).keydown(checkKey)
+	}
+	
+	
+  function checkKey(e) {
+    if (e.keyCode==32){
+      e.preventDefault();
+      var pointer_events =  ( ($('#editor').css("pointer-events")=='auto') ? 'none' : 'auto' )
+      $('#editor').css("pointer-events", pointer_events)
+      $('#navigation_mode').toggle()
+      $('#dessin_mode').toggle()
+      $('#editor').hide().fadeIn()
     }
+
+    // alert(e.keyCode)
+  }
   
-  </style>
-  <div id="editor" class="sketchpad"></div>
-  <div id="colorpicker"></div>
-  <div id="news" style=""></div>
+</script>
+
+
+<body>
   
+  <!-- le contenu de la page, centré avec une largeur fixée -->
+  <div id='main_content'>
+  
+    <!-- pour le choix de la page à hacker et les tools -->
+    <div id='form_container'>
+      
+      <!-- les outils pour dessiner -->
+      <div id='tools_container'>
+                
+        <!-- <button onclick="">   -->
+          
+        <button onclick="$('#colorpicker').fadeToggle()">Change color</button><br />
+        <div id="colorpicker"></div>
+      </div>
+      
+      <!-- l'input pour le choix de la page -->
+      <form id='select_page_form' onsubmit='return false'>
+        <input type='text' id='hacked_page_input' />
+        <input type='submit' onclick='hack_page()' value='Go !'/>
+        
+          <span id='navigation_mode' class='action_mode' style='display:none'>Browsing</span>
+          <span id='dessin_mode' class='action_mode'>Drawing</span>
+          (use space bar to change mode)
+          
+          
+      </form>
+      
+    </div>
+    
+    <!-- div qui contiendra la page désirée avec par dessus un div pour dessiner -->
+    <div id='hacked_page_container'>
+    
+      <!-- le div pour dessiner  -->
+      <div id="editor" class="sketchpad"></div>
+      
+      <!-- l'iframe avec la page à afficher -->
+      <iframe id='hacked_page_iframe' src="http://lemonde.fr">
+        <p>Your browser does not support iframes.</p>
+      </iframe>
+      
+    </div>
+  
+  </div>
+  
+  
+
   <script type="text/javascript">
   	
   	$(function(){
@@ -32,30 +110,12 @@
       
       // Create the editor sketchpad
     	var sketchpad = Raphael.sketchpad("editor", {
-    		width: 400,
-    		height: 400,
+    		width: 1200,
+    		height: 10000,  // doit être le même que le hacked_page_iframe
     		editing: true
     	});
     	
     	var pen = sketchpad.pen();
-      
-      // Create the viewer sketchpad
-      // var sketchpad2 = Raphael.sketchpad("viewer", {
-      //  width: 200,
-      //  height: 400,
-      //  editing: false
-      // });
-
-      // Listen to news
-      socket.on('news', function(data) {
-        
-        // Add the message to the top of the news bar
-        if(data){
-          $('#news').prepend(data + "<br />");
-        }
-        
-      });
-
 
       var listenToChanges = true;
       
@@ -77,22 +137,14 @@
     	    listenToChanges = true;
     	  }
 
-    	});
-    	
+    	})
     	
     	// Set styles
-    	var sketchpads = $('.sketchpad');
-    	sketchpads.css('display', 'inline-block');
-    	sketchpads.css('margin','10px');
-    	sketchpads.css('border','black 2px solid');
-    	sketchpads.height(400);
-    	sketchpads.width(400);
+      var sketchpads = $('.sketchpad');
     	
     	// add colors
     	$('#colorpicker').farbtastic(sketchpad.pen().color);
-    	
-    	
-    	
+
   	});
   </script>
 
