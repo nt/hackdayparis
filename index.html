@@ -106,8 +106,6 @@
          // console.log("Going through the paths:\n");
          $.each(lastStroke.path, function(position,path){
            
-           console.log(JSON.stringify(path));
-           
            // TODO: remove weird points (not necessarly negative values... just weird ones -> zig zag effect)
            if(path[1]>0 && path[2]>0){
              // console.log("Pushing it\n");
