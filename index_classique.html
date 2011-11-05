@@ -10,8 +10,10 @@
   <script type="text/javascript" src="js/farbtastic/farbtastic.js"></script>
   
   
-  <link rel="stylesheet" href="js/farbtastic/farbtastic.css" type="text/css" />
+  
   <title>Re-draw the web !</title>
+  
+  <link rel="stylesheet" href="js/farbtastic/farbtastic.css" type="text/css" />
   <link rel="stylesheet" href="css/hack.css" type="text/css" />
   
 </head>
@@ -42,7 +44,7 @@
 	
   // pour désactiver ou non le mode dessin
   function checkKey(e) {
-    if (e.keyCode==32){
+    if (e.keyCode==91){
       e.preventDefault()
       var pointer_events =  ( ($('#editor').css("pointer-events")=='auto') ? 'none' : 'auto' )
       $('#editor').css("pointer-events", pointer_events)
@@ -76,6 +78,7 @@
         <!-- <button onclick="">   -->
         <button id="clear_button">Clear</button>
         <button onclick="$('#colorpicker').fadeToggle()">Change color</button><br />
+        <button onclick="get_iframe_url()">BAM</button>
         
         <script>
           function get_iframe_url(){

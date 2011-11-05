@@ -1,6 +1,7 @@
 body{
   padding:0px;
   margin:auto;
+  background-color:#000;
 }
 #main_content{
 /* border:solid 1px;*/
@@ -31,7 +32,7 @@ body{
   margin:20px 10px;
 }
 #select_page_form input[type=text]{
-  width:300px;
+  width:500px;
 }
 
 #colorpicker{

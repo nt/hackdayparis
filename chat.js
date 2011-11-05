@@ -35,7 +35,8 @@ var clients = {}; // pool of connected clients
 var i = 0; // an index
 var clientCount = 0; // number of clients still connected
 
-var lastData = {}; // current data (for new comers)
+var strokes = [] // current data (for new comers)
+
 
 io.sockets.on('connection', function (socket) {
   
@@ -43,30 +44,57 @@ io.sockets.on('connection', function (socket) {
   socket.clientId = "user" + i++ ; // user1, user2, ...
   
   // add the client to the pool
-  clients[socket.clientId] = socket;
   clientCount++;
   
   // tell everyone that the new guy arrived
   socket.broadcast.emit('news', socket.clientId + ' has joined the fun and there are ' + clientCount + " of you now" );
   
-  // give the new guy the current strokes
-  socket.emit('draw', lastData);
+  
+  socket.on('set_url', function (data) {
+    socket.url = data.url
+    socket.join(socket.url)
+    if(strokes[socket.url] == undefined){
+      strokes[socket.url] = new Array()
+    }
+    // give the new guy the current strokes
+    console.log("----------------------------------------------  Nouveau dans " + socket.url)    
+    socket.emit('initDraw', strokes[socket.url]);
+    
+  
+  })
+  
+  
+
   
   // listen to draw orders
-  socket.on('drawThis', function (data) {
+  socket.on('drawThis', function (stroke) {
     
-    // log
-    if(data.strokes && data.clientId){
-      console.log( data.clientId + " drew something" );
+    if(stroke){
+      
+      // add the clientId in the stroke object
+      stroke.clientId = socket.clientId;
+      stroke.url = socket.url
+
+      // broadcast the drawing to everyone
+      // socket.broadcast.emit('draw',stroke);
+      socket.broadcast.to(socket.url).emit('draw',stroke)
+      
+      // add the stroke to the stack of the room
+      strokes[socket.url].push(stroke)
+      
+      console.log("------------------- on ajoute à " + socket.url)
+      
     }
     
-    // broadcast the drawing to everyone
-    socket.broadcast.emit('draw',data);
+  })
+  
+  socket.on('clear', function () {
     
-    // save the current dataset
-    lastData = data;
-    
-  });
+      strokes[socket.url] = new Array()
+      io.sockets.in(socket.url).emit('initDraw', strokes[socket.url]);
+      
+  })
+  
   
   socket.on('disconnect', function () {
     

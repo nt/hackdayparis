@@ -34,6 +34,8 @@
  * We use this wrapper to control global variables.
  * The only global variable we expose is Raphael.sketchpad.
  */
+
+
 (function(Raphael) {
 	
 	/**
