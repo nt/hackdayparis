@@ -1,30 +1,166 @@
-<script src="jquery-1.7.min.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-
-indexus
-
-<script>
+<!html>
+<head>
   
-  var socket = io.connect('http://localhost')
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/raphael-min.js"></script>
+  <script type="text/javascript" src="js/json2.js"></script>
+  <script type="text/javascript" src="js/raphael.sketchpad.js"></script>
+  <script type="text/javascript" src="js/jscolor/jscolor.js"></script>
+  <script type="text/javascript" src="js/farbtastic/farbtastic.js"></script>
+  <link rel="stylesheet" href="js/farbtastic/farbtastic.css" type="text/css" />
   
-  socket.on('write_new_message', function (data) {
-    write_new_message(data.message)
-  })
+</head>
+<body>
+  <style>
   
-</script>
+    #colorpicker{
+      display: inline-block;
+    }
+  
+  </style>
+  <div id="clientId"></div>
+  <div id="editor" class="sketchpad"></div>
+  <div id="colorpicker"></div>
+  <div id="news" style=""></div>
+  <button id="clear">Clear</button>
+  
+  <script type="text/javascript">
+  	var thisClientId = "";
+  	
+  	var presentStrokes = []; // Array containing all the strokes on my canvas
+  	
+  	$(function(){
+  	  // Connect to drawing server
+  	  var socket = io.connect();
+      
+      // Create the editor sketchpad
+    	var sketchpad = Raphael.sketchpad("editor", {
+    		width: 400,
+    		height: 400,
+    		editing: true
+    	});
+    	
+    	// Add a helper method to draw on sketchpad without firing the "sketchpad.change" event
+    	var listenToChanges = true;
+      var silentDraw = function(strokes){
+         // ignore changes for a while
+      	 listenToChanges = false;
 
-<div id='messages_container'></div>
+      	 // draw the strokes
+         sketchpad.strokes( presentStrokes );
+      };
+      
+    	// Set the clear button
+    	$('#clear').click(function(){
+        socket.emit("clear");
+    	});
+    	
+    	socket.on('clear', function(){
+    	  presentStrokes = [];
+    	  
+    	  silentDraw(presentStrokes);
+    	});
 
-<input id='new_text_input' type='text' />
+      // Listen to news
+      socket.on('news', function(data) {
 
-<button onclick='send_new_message()' >Nouveau message</button>
+        // Add the message to the top of the news bar
+        if(data){
+          $('#news').prepend(data + "<br />");
+        }
+        
+      });
+      
+      // Listen for initial strokes
+      socket.on('initDraw', function(strokes){
+        presentStrokes = strokes;
+        
+        silentDraw( presentStrokes );
+      });
+      
+    	// When the server sends me a drawing, draw it in the sketchpad
+      socket.on('draw', function (stroke) {
+        
+        if(stroke){
+          // add the stroke to the stack
+           presentStrokes.push( stroke );
 
-<script>
-function send_new_message(){
-  var message = $('#new_text_input').val()
-  socket.emit('new_message', { message: message })
-}
-function write_new_message(new_message){
-  $('#messages_container').append("- " + new_message + "<br />")
-}
-</script>
+           // refresh the stack
+           silentDraw( presentStrokes );
+        }
+         
+      });
+
+
+
+    	// Fired when I draw on my sketchpad
+    	sketchpad.change(function() {
+        
+        // console.log("Change() with listenToChanges="+listenToChanges );
+        
+        if(listenToChanges){
+         
+         // get the strokes
+         var strokesArray = sketchpad.strokes();
+         
+         // the last stroke is the one I drew
+         var lastStroke = strokesArray[strokesArray.length-1];
+         
+         // clean the stroke: remove any weird paths (i.e. with negative values)
+         var cleanPaths = [];
+         // console.log("Going through the paths:\n");
+         $.each(lastStroke.path, function(position,path){
+           
+           // TODO: remove weird points (not necessarly negative values... just weird ones -> zig zag effect)
+           if(path[1]>0 && path[2]>0){
+             // console.log("Pushing it\n");
+             cleanPaths.push(path);
+           }
+           else{
+             // console.log("Not pushing it\n");
+           }
+           
+           
+           
+         });
+         // console.log('cleanPaths = '+JSON.stringify(cleanPaths));
+         lastStroke.path = cleanPaths;
+         
+         // add my client id to the stroke (the server will override this but locally it will be usefull to remember my strokes)
+         lastStroke.clientId = "me";
+         
+         // send the stroke to the server
+         socket.emit("drawThis", lastStroke );
+         
+         // add the stroke to the stack
+         presentStrokes.push( lastStroke );
+         
+         // refresh the stack
+         silentDraw( presentStrokes );
+         
+        }
+    	  else{
+    	    listenToChanges = true;
+    	  }
+
+    	});
+    	
+    	
+    	// Set styles
+    	var sketchpads = $('.sketchpad');
+    	sketchpads.css('display', 'inline-block');
+    	sketchpads.css('margin','10px');
+    	sketchpads.css('border','black 2px solid');
+    	sketchpads.height(400);
+    	sketchpads.width(400);
+    	
+    	// add colors
+    	$('#colorpicker').farbtastic(sketchpad.pen().color);
+    	
+    	
+    	
+  	});
+  </script>
+
+</body>
