@@ -36,6 +36,11 @@ function handler (request, response) {
 var MESSAGE_BACKLOG = 200;
 var messages = [];
 
+io.configure(function () { 
+  io.set("transports", ["xhr-polling"]); 
+  io.set("polling duration", 10); 
+});
+
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
   
