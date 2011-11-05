@@ -24,11 +24,9 @@
   <div id="news" style=""></div>
   
   <script type="text/javascript">
-  	
   	$(function(){
-  	  
   	  // Connect to drawing server
-  	  var socket = io.connect('http://localhost');
+  	  var socket = io.connect();
       
       // Create the editor sketchpad
     	var sketchpad = Raphael.sketchpad("editor", {
