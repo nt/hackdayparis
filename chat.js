@@ -3,7 +3,13 @@ var app = require('http').createServer(handler)
   , fs = require('fs')
 var path = require('path');
 
-app.listen(8080);
+var port = process.env.PORT || 8080;
+app.listen(port);
+
+io.configure(function () { // Polling due to heroku
+  io.set("transports", ["xhr-polling"]); 
+  io.set("polling duration", 10); 
+})
 
 function handler (request, response) {
   var filePath = '.' + request.url;
