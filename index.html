@@ -13,37 +13,274 @@
 </head>
 <body>
   <style>
-  
-    #colorpicker{
-      display: inline-block;
+    
+    body {
+      background: url('dark_mosaic.png') ;
+      margin: 0;
+      padding: 0;
+      color: black;
+      font-family: Arial;
+      
+      height: 700px;
     }
-  
+    
+    header {
+      background: -webkit-gradient(linear, left top, left bottom, from(#00B0FF), to(#004784));
+      background: -moz-linear-gradient(top,  #00B0FF,  #004784);
+      color: white;
+      margin: 10px;
+      border-radius: 10px;
+      padding: 5px 15px;
+    }
+
+    #logo {
+      font-size: 2em;
+      font-weight: bold;
+      
+      text-shadow: #005CAD -1px -1px;
+    }
+    
+    #baseline {
+      font-style: italic;
+      text-shadow: #005CAD -1px -1px;
+    }
+    
+    #welcomeScreen{
+      text-align: center;
+      width: 700px;
+      margin: auto;
+      margin-top: 100px;
+    }
+    
+    #invite {
+      color: white;
+      font-weight: normal;
+      font-size: 2em;
+    }
+    
+    #nameField{
+      height: 50px;
+      width: 250px;
+      font-size: 1.8em;
+      margin-top: 20px;
+      padding-left: 15px;
+      border-radius: 10px;
+      border: none;
+    }
+    
+    #enterButton{
+      height: 55px;
+      font-size: 1.8em;
+      background: -webkit-gradient(linear, left top, left bottom, from(#0BD830), to(#008400));
+      background: -moz-linear-gradient(top,  #0BD830,  #008400);
+      border: 1px solid #008400;
+      border-radius: 20px;
+      color: white;
+      margin-left: -20px;
+      text-shadow: #00810D -1px -1px;
+      font-weight: bold;
+    }
+    
+    #enterButton:hover{
+      background: -webkit-gradient(linear, left top, left bottom, from(#09FF35), to(#008400));
+      background: -moz-linear-gradient(top,  #09FF35,  #008400);
+    }
+    
+    #enterButton:active{
+      background: -webkit-gradient(linear, left top, left bottom, from(#05C125), to(#05C125));
+      background: -moz-linear-gradient(top,  #05C125,  #05C125);
+    }
+    
+    #playground { 
+      display: none; /* default is hidden */
+    }
+    
+    .sketchpad{
+      background-color: white;
+      border: 3px solid black;
+      width: 400px;
+      height: 400px;
+      position: absolute;
+      left: 20px;
+      top: 140px;
+    }
+    
+    #drawerTools {
+      display: none; /* default is hidden */
+    }
+    
+    #news{
+      position: absolute;
+      top: 140px;
+      right: 30px;
+      width: 400px;
+      padding: 10px;
+      background-color: rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 5px;
+      height: 346px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+    
+    #messageField{
+      border: 1px solid black;
+      border-radius: 5px;
+      width: 400px;
+      position: absolute;
+      top: 509px;
+      right: 30px;
+      width: 420px;
+      height: 35px;
+      padding: 10px;
+      font-size: 1em;
+    }
+    
+    #colorButton,#hidePicker {
+      position: absolute;
+      top: 140px;
+      left: 430px;
+    }
+    
+    #colorPicker{
+      position: absolute;
+      top: 170px;
+      left: 430px;
+    }
+    
+    #hidePicker, #colorpicker{
+      display: none; /* default is hidden */
+    }
+    
+    #clear {
+      position: absolute;
+      top: 520px;
+      left: 430px;
+    }
+    
+    #title {
+      position: absolute;
+      top: 100px;
+      left: 30px;
+      
+      font-size: 1.4em;
+      color: white;
+      font-style: italic;
+    }
   </style>
-  <div id="clientId"></div>
-  <div id="editor" class="sketchpad"></div>
-  <div id="colorpicker"></div>
-  <div id="news" style=""></div>
-  <button id="clear">Clear</button>
+  
+  <header>
+    <div id="logo">Draw me a rabbit</div>
+    <div id="baseline">We know you're alone in your basement. We are too. Let's have fun drawing. Yay.</div>
+  </header>
+  
+  <div id="welcomeScreen">
+    <div id="invite">Hey... you! Wanna play?!</div>
+    <input type="text" id="nameField" placeholder="Your name"/>
+    <button id="enterButton">Let me in!</button>
+  </div>
+  
+  <div id="playground">
+    <div id="title"></div>
+    <div id="sketchpad"></div>
+    <div id="drawerTools">
+      <button id="colorButton">Change color</button>
+      <button id="hidePicker">Hide colors</button>
+      <div id="colorpicker"></div>
+      <button id="clear">Clear</button>
+    </div>
+    <div id="news"></div>
+    <input type="text" id="messageField" />
+  </div>
+  
   
   <script type="text/javascript">
-  	var thisClientId = "";
   	
   	var presentStrokes = []; // Array containing all the strokes on my canvas
+  	
+  	function printNews(message){
+  	  $('#news').append(message);
+  	  $('#news').scrollTop(100000); // scroll to bottom
+  	}
   	
   	$(function(){
   	  // Connect to drawing server
   	  var socket = io.connect();
       
+      function joinGame(){
+        var userName = $('#nameField').val();
+        
+        if(userName){
+          socket.emit('joinGame', { playerName: userName }, function(game){
+
+            console.log(game);
+
+            if(game.strokes){
+              presentStrokes = game.strokes;
+              silentDraw();
+            }
+
+            if(game.players){
+              printNews("Currently " + game.players.length + " player"+(game.players.length>1?"s":"")+" in the game<br />");
+            }
+
+            if(game.currentDrawer.playerName){
+              $('#title').html(game.currentDrawer.playerName + " is drawing... but what?!");
+            }
+            else{
+              $('#title').html("Waiting for more players");
+            }
+
+            // close login screen
+            $('#welcomeScreen').hide();
+            // open game zone
+            $('#playground').show();
+
+          });
+        }
+        
+      };
+      
+      $('#enterButton').click(joinGame);
+      $('#nameField').bind('keypress', function(e){
+        if(e.keyCode == 13){
+          joinGame();
+        }
+      });
+      
+      $('#colorButton').click(function(){
+        $('#colorButton').hide();
+        $('#hidePicker').show();
+        $('#colorpicker').show();
+      });
+      
+      $('#hidePicker').click(function(){
+        $('#hidePicker').hide();
+        $('#colorButton').show();
+        $('#colorpicker').hide();
+      });
+      
+      $('#messageField').bind('keypress', function(e){
+        if(e.keyCode == 13){
+          // enter key hit
+          
+          socket.emit('guess', $('#messageField').val());
+          
+          $('#messageField').val("");
+        }
+      });
+      
       // Create the editor sketchpad
-    	var sketchpad = Raphael.sketchpad("editor", {
+    	var sketchpad = Raphael.sketchpad("sketchpad", {
     		width: 400,
     		height: 400,
-    		editing: true
+    		editing: false // only drawer can edit
     	});
+    	
     	
     	// Add a helper method to draw on sketchpad without firing the "sketchpad.change" event
     	var listenToChanges = true;
-      var silentDraw = function(strokes){
+      var silentDraw = function(){
          // ignore changes for a while
       	 listenToChanges = false;
 
@@ -56,18 +293,43 @@
         socket.emit("clear");
     	});
     	
+    	// Listen to clear calls
     	socket.on('clear', function(){
     	  presentStrokes = [];
     	  
-    	  silentDraw(presentStrokes);
+    	  silentDraw();
     	});
 
       // Listen to news
       socket.on('news', function(data) {
-
-        // Add the message to the top of the news bar
-        if(data){
-          $('#news').prepend(data + "<br />");
+        
+        console.log("Received news "+JSON.stringify(data));
+        
+        switch(data.action){
+          case "joined":
+            printNews(data.name + " has joined the game<br />");
+            console.log(data.name + " has joined the game<br />");
+            break;
+          
+          case "quit":
+            printNews(data.name + " has quit the game<br />");
+            console.log(data.name + " has quit the game<br />");
+            break;
+          
+          case "guess":
+            printNews(data.name + " : "+data.value+"<br />");
+            console.log(data.name + " : "+data.value+"<br />");
+            break;
+            
+          case "msg":
+            printNews(data.value+"<br />");
+            break;
+            
+          case "found":
+            printNews(data.name + " : "+data.value+"<br />");
+            console.log(data.name + " : "+data.value+"<br />");
+            printNews(data.name + " found the word ("+data.value+")! Congrats mate!<br />");
+            break;
         }
         
       });
@@ -76,10 +338,10 @@
       socket.on('initDraw', function(strokes){
         presentStrokes = strokes;
         
-        silentDraw( presentStrokes );
+        silentDraw();
       });
       
-    	// When the server sends me a drawing, draw it in the sketchpad
+    	// Listen for strokes
       socket.on('draw', function (stroke) {
         
         if(stroke){
@@ -87,12 +349,41 @@
            presentStrokes.push( stroke );
 
            // refresh the stack
-           silentDraw( presentStrokes );
+           silentDraw();
         }
          
       });
 
-
+      socket.on('newGame', function(data){
+        
+        console.log("A new hame is starting! data=" + JSON.stringify(data));
+        
+        // clear the drawing
+        presentStrokes = [];
+    	  silentDraw();
+        
+        printNews("A new game has started <br /><br />");
+        
+        if(data.word){
+          // i'm the drawer!
+          $('#title').html("Your turn: draw a "+data.word);
+          sketchpad.editing(true);
+          $('#drawerTools').show();
+          
+          printNews("You are the drawer! <br /> Draw a "+data.word+"<br/><br/>");
+          console.log("I am the drawer and the word is "+data.word);
+          
+        }
+        else{
+          $('#title').html(data.name + " is drawing... guess what!");
+          printNews(data.name + " is drawing... You have to guess what!<br /><br />");
+          sketchpad.editing(false);
+          $('#drawerTools').hide();
+          
+          console.log(data.name+" is the drawer");
+        }
+        
+      });
 
     	// Fired when I draw on my sketchpad
     	sketchpad.change(function() {
@@ -148,12 +439,7 @@
     	
     	
     	// Set styles
-    	var sketchpads = $('.sketchpad');
-    	sketchpads.css('display', 'inline-block');
-    	sketchpads.css('margin','10px');
-    	sketchpads.css('border','black 2px solid');
-    	sketchpads.height(400);
-    	sketchpads.width(400);
+    	$('#sketchpad').addClass("sketchpad");
     	
     	// add colors
     	$('#colorpicker').farbtastic(sketchpad.pen().color);
